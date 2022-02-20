@@ -6,7 +6,7 @@ class Game:
         self.points = 0
         self.game_running = True
         self.pixel_size = 10
-        self.screen_size = (400, 300)
+        self.screen_size = (640, 480)
         self.increase_level_every_n_points = 10
         self.display = None
         self.font_message = None
@@ -27,3 +27,9 @@ class Game:
 
     def screen_y(self):
         return self.screen_size[1]
+
+    def screen_center_rounded(self):
+        screen_x_half = math.floor(self.screen_x() / 2 / self.pixel_size) * self.pixel_size
+        screen_y_half = math.floor(self.screen_y() / 2 / self.pixel_size) * self.pixel_size
+
+        return screen_x_half, screen_y_half

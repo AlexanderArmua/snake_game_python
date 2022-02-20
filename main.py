@@ -75,8 +75,9 @@ def set_main_message(game, msg, color):
     game.display.blit(message, [message_x, message_y])
 
 
-def set_points_message(game, color):
-    message = game.font_hud.render(f"Points: {game.points}", True, color)
+def draw_points_message(game, snake):
+    message_color = tuple([255 - color for color in snake.color])
+    message = game.font_hud.render(f"Points: {game.points} - {snake.get_position()}", True, message_color)
 
     message_x = game.pixel_size * 2
     message_y = game.pixel_size * 2
@@ -85,13 +86,14 @@ def set_points_message(game, color):
 
 
 def draw_snake(game, display_screen, snake):
-    set_points_message(game, snake.color)
+    draw_points_message(game, snake)
     pygame.draw.rect(display_screen, snake.color, [*snake.get_position(), game.pixel_size, game.pixel_size])
     pygame.display.update()
 
 
 def run_game(game):
-    snake = Snake(3, game.pixel_size, 50, 50)
+    snake = Snake(3, game.pixel_size, *game.screen_center_rounded())
+    snake.set_random_color()
 
     clock = pygame.time.Clock()
 

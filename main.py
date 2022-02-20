@@ -22,18 +22,20 @@
 """
 
 import pygame
-from snake import Snake
+from snake import Snake, Block
 from controls import actions, snake_can_move
 from game import Game
+from configs import background_color, inverse_color, font_alert_size, font_hud_size
 
 
-def init_game(game):
+def init_game(game: Game):
     pygame.init()
 
     display_screen = pygame.display.set_mode(game.screen_size)
 
-    font_message = pygame.font.SysFont('', 50)
-    font_hud = pygame.font.SysFont('', 24)
+    font_message = pygame.font.SysFont('', font_alert_size)
+    font_hud = pygame.font.SysFont('', font_hud_size)
+    clock = pygame.time.Clock()
 
     pygame.display.update()
 
@@ -42,6 +44,7 @@ def init_game(game):
     game.display = display_screen
     game.font_message = font_message
     game.font_hud = font_hud
+    game.clock = clock
 
 
 def close_game():
@@ -56,7 +59,7 @@ def should_close_game(event) -> bool:
     return has_clicked_quit or has_pressed_esc
 
 
-def handle_keys_down(event, snake, game) -> bool:
+def handle_keys_down(event, snake: Snake, game: Game) -> bool:
     if event.key in actions:
         actions[event.key](snake)
         return True
@@ -66,7 +69,7 @@ def handle_keys_down(event, snake, game) -> bool:
     return False
 
 
-def set_main_message(game, msg, color):
+def set_main_message(game: Game, msg: str, color: (int, int, int)):
     message = game.font_message.render(msg, True, color)
 
     message_x = game.screen_x() / 2 - message.get_width() / 2
@@ -75,46 +78,61 @@ def set_main_message(game, msg, color):
     game.display.blit(message, [message_x, message_y])
 
 
-def draw_points_message(game, snake):
-    message_color = tuple([255 - color for color in snake.color])
+def draw_points_message(game: Game, snake: Snake):
+    message_color = inverse_color(snake.color)
     message = game.font_hud.render(f"Points: {game.points} - {snake.get_position()}", True, message_color)
 
-    message_x = game.pixel_size * 2
-    message_y = game.pixel_size * 2
-
-    game.display.blit(message, [message_x, message_y])
+    game.display.blit(message, [game.pixel_size] * 2)
 
 
-def draw_snake(game, display_screen, snake):
-    draw_points_message(game, snake)
-    pygame.draw.rect(display_screen, snake.color, [*snake.get_position(), game.pixel_size, game.pixel_size])
-    pygame.display.update()
+def handle_pygame_events(game: Game, snake: Snake):
+    for event in pygame.event.get():
+        if should_close_game(event):
+            game.set_game_running(False)
+        elif event.type == pygame.KEYDOWN:
+            handle_keys_down(event, snake, game)
 
 
-def run_game(game):
+def handle_snake_movement(game: Game, snake: Snake):
+    if snake_can_move(snake, game.pixel_size, *game.screen_size):
+        snake.move()
+    else:
+        snake.set_random_color()
+        set_main_message(game, f"You crashed at {snake.get_position()}", snake.color)
+
+    pygame.draw.rect(game.display, snake.color, [*snake.get_position(), *([game.pixel_size] * 2)])
+
+
+def handle_interaction_between_snake_and_block(game: Game, snake: Snake, block: Block):
+    if snake.get_position() == block.get_position():
+        game.add_points(5)
+        block.move_to_random_coords()
+
+    block_x = block.position_x + game.pixel_size / 2
+    block_y = block.position_y + game.pixel_size / 2
+
+    pygame.draw.circle(game.display, block.color, [block_x, block_y], game.pixel_size / 2)
+
+
+def run_game(game: Game):
     snake = Snake(3, game.pixel_size, *game.screen_center_rounded())
-    snake.set_random_color()
 
-    clock = pygame.time.Clock()
+    block = Block(inverse_color(snake.color), game.pixel_size, game.screen_x(), game.screen_y())
 
     while game.get_game_running():
-        for event in pygame.event.get():
-            if should_close_game(event):
-                game.set_game_running(False)
-            elif event.type == pygame.KEYDOWN:
-                handle_keys_down(event, snake, game)
+        handle_pygame_events(game, snake)
 
-        game.display.fill((0, 0, 0))
+        game.display.fill(background_color)
 
-        if snake_can_move(snake, game.pixel_size, *game.screen_size):
-            snake.move()
-        else:
-            snake.set_random_color()
-            set_main_message(game, f"You crashed at {snake.get_position()}", snake.color)
+        handle_snake_movement(game, snake)
 
-        draw_snake(game, game.display, snake)
-        timer = game.get_level()
-        clock.tick(timer)
+        handle_interaction_between_snake_and_block(game, snake, block)
+
+        draw_points_message(game, snake)
+
+        pygame.display.update()
+
+        game.clock.tick(game.get_level())
 
 
 if __name__ == '__main__':

@@ -1,10 +1,6 @@
 import random
 from configs import initial_snake_direction, get_safe_screen_coord
-
-DIRECTION_UP = (0, -1)
-DIRECTION_DOWN = (0, 1)
-DIRECTION_RIGHT = (1, 0)
-DIRECTION_LEFT = (-1, 0)
+from configs import DIRECTION_UP, DIRECTION_RIGHT, DIRECTION_LEFT, DIRECTION_DOWN
 
 
 class Positionable:
@@ -24,10 +20,30 @@ class Snake(Positionable):
         self.direction = initial_snake_direction
         self.color = None
         self.set_random_color()
+        self.tail = [self.get_position()]
+
+    def get_tail(self):
+        return self.tail
 
     def move(self):
         self.position_x += self.direction[0] * self.speed
         self.position_y += self.direction[1] * self.speed
+
+        new_tail = [self.tail[index] for index, value in enumerate(self.tail[1::])]
+
+        self.tail = [self.get_position()] + new_tail
+
+    def increase_tail(self, pixel_size: int):
+        last_tail = self.tail[-1]
+
+        new_tail = tuple(map(sum, zip(last_tail, tuple(coord * (-1) * pixel_size for coord in self.direction))))
+
+        self.tail = [self.get_position()] + self.tail[1::] + [new_tail]
+
+    def has_crashed_against_itself(self) -> bool:
+        if self.tail[0] in self.tail[1::]:
+            return True
+        return False
 
     def move_up(self): self.direction = DIRECTION_UP
     def move_down(self): self.direction = DIRECTION_DOWN

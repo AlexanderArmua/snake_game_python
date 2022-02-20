@@ -10,6 +10,11 @@ font_hud_size = 24
 
 initial_snake_direction = (0, -1)
 
+DIRECTION_UP = (0, -1)
+DIRECTION_DOWN = (0, 1)
+DIRECTION_RIGHT = (1, 0)
+DIRECTION_LEFT = (-1, 0)
+
 
 def inverse_color(colors: (int, int, int)) -> (int, int, int):
     return tuple([255 - color for color in colors])

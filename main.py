@@ -59,12 +59,10 @@ def should_close_game(event) -> bool:
     return has_clicked_quit or has_pressed_esc
 
 
-def handle_keys_down(event, snake: Snake, game: Game) -> bool:
+def handle_keys_down(event, snake: Snake, _: Game) -> bool:
     if event.key in actions:
         actions[event.key](snake)
         return True
-    elif event.key == pygame.K_q:
-        game.add_points()
 
     return False
 
@@ -94,18 +92,20 @@ def handle_pygame_events(game: Game, snake: Snake):
 
 
 def handle_snake_movement(game: Game, snake: Snake):
-    if snake_can_move(snake, game.pixel_size, *game.screen_size):
+    if snake_can_move(snake, game.pixel_size, *game.screen_size) and not snake.has_crashed_against_itself():
         snake.move()
     else:
         snake.set_random_color()
         set_main_message(game, f"You crashed at {snake.get_position()}", snake.color)
 
-    pygame.draw.rect(game.display, snake.color, [*snake.get_position(), *([game.pixel_size] * 2)])
+    for snake_piece in snake.tail:
+        pygame.draw.rect(game.display, snake.color, [*snake_piece, *[game.pixel_size, game.pixel_size]])
 
 
 def handle_interaction_between_snake_and_block(game: Game, snake: Snake, block: Block):
     if snake.get_position() == block.get_position():
         game.add_points(5)
+        snake.increase_tail(game.pixel_size)
         block.move_to_random_coords()
 
     block_x = block.position_x + game.pixel_size / 2

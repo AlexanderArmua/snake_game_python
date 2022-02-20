@@ -1,11 +1,22 @@
 import pygame
 from snake import Snake
+from configs import DIRECTION_DOWN, DIRECTION_LEFT, DIRECTION_RIGHT, DIRECTION_UP
+
+
+def snake_can_go_back(snake: Snake, new_direction: (int, int)):
+    if len(snake.tail) == 1:
+        return True
+    elif tuple(map(sum, zip(snake.direction, new_direction))) == (0, 0):
+        return False
+
+    return True
+
 
 snake_movement = {
-    'move_up': lambda snake: snake.move_up(),
-    'move_down': lambda snake: snake.move_down(),
-    'move_right': lambda snake: snake.move_right(),
-    'move_left': lambda snake: snake.move_left()
+    'move_up': lambda snake: snake.move_up() if snake_can_go_back(snake, DIRECTION_UP) else None,
+    'move_down': lambda snake: snake.move_down() if snake_can_go_back(snake, DIRECTION_DOWN) else None,
+    'move_right': lambda snake: snake.move_right() if snake_can_go_back(snake, DIRECTION_RIGHT) else None,
+    'move_left': lambda snake: snake.move_left() if snake_can_go_back(snake, DIRECTION_LEFT) else None
 }
 
 actions = {
